@@ -26,5 +26,5 @@ For example:
 ```
 * Execute with multiple pod tags "mongo,jenkins,pgsql"
 ```
-# ansible-playbook deploy-workloads.yml -i hosts.yaml --tags "mongo" -e count=5 -e storage_class=glusterfs-storage-block
+# ansible-playbook deploy-workloads.yml -i hosts.yaml --tags "mongo,jenkins,pgsql" -e count=5 -e storage_class=glusterfs-storage-block
 ```
