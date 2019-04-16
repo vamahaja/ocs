@@ -1,0 +1,26 @@
+---
+# tasks file for create-and-wait-for-pvc
+
+- name: Remote template's path
+  set_fact:
+    remote_pvc_template_path: "{{workload_dir}}/pvc-template.yml"
+    pvc_namespace: "{{namespace}}"
+
+- name: Copy PVC template file to oc-master node
+  copy:
+    src: roles/deploy-and-wait-for-pvc/templates/pvc-template.yml
+    dest: "{{remote_pvc_template_path}}"
+- include: ../../oc-process/tasks/main.yml
+  vars:
+    template_path: "{{remote_pvc_template_path}}"
+    parameters: >
+      JENKINS_PVC_NAME={{pvc_name}}
+      VOLUME_CAPACITY={{volume_capacity}}
+      STORAGE_CLASS_NAME={{storage_class_name}}
+- name: Wait until PVC is in 'Bound' state
+  shell: |
+    oc get pvc -n {{pvc_namespace}} "{{pvc_name}}" --no-headers -o=custom-columns=:.status.phase
+  register: pvc_status
+  until: pvc_status.stdout.find("Bound") != -1
+  retries: 60
+  delay: 5

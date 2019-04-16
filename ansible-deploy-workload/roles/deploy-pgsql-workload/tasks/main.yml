@@ -1,0 +1,72 @@
+---
+# tasks file for deploy-pgsql-workload
+
+- name: Set variables for pgsql
+  set_fact:
+    remote_pgsql_template_path: "{{workload_dir}}/pgsql-template.yml"
+
+    pgsql_namespace: "{{pgsql_prefix}}-namespace"
+    pgsql_dc_name: "{{pgsql_prefix}}"
+    pgsql_pvc_name: "{{pgsql_prefix}}-pvc"
+  tags: pgsql
+
+- include: roles/oc-create-namespace/tasks/main.yml
+  vars:
+    namespace: "{{pgsql_namespace}}"
+  tags: pgsql
+
+- name: Create PVC for pgsql pod
+  include: roles/deploy-and-wait-for-pvc/tasks/main.yml
+  vars:
+    namespace: "{{pgsql_namespace}}"
+    temp_dir : "{{workload_dir}}"
+    pvc_name: "{{pgsql_pvc_name}}"
+    volume_capacity: "{{pgsql_pvc_size}}"
+    storage_class_name: "{{pgsql_storage_class}}"
+  tags: pgsql
+
+- name: Copy pgsql template file to oc-master node
+  copy:
+    src: roles/deploy-pgsql-workload/templates/pgsql-template.yml
+    dest: "{{remote_pgsql_template_path}}"
+  tags: pgsql
+- include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{pgsql_namespace}}"
+    dc_name: "{{pgsql_dc_name}}"
+    template_path: "{{remote_pgsql_template_path}}"
+    parameters: >
+      DATABASE_SERVICE_NAME={{pgsql_dc_name}}
+      PGSQL_PVC_NAME={{pgsql_pvc_name}}
+  tags: pgsql
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{pgsql_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{pgsql_dc_name}}
+  register: pgsql_pod_name
+  tags: pgsql
+
+- name: Set workload temporary directory
+  set_fact:
+    temp_workload_dir: "{{workload_dir}}/{{pgsql_pod_name.stdout}}"
+  tags: pgsql
+- name: Create temporary directory to copy script files
+  file:
+    path: "{{temp_workload_dir}}"
+    state: directory
+  tags: pgsql
+- name: Copy config files on oc-master node
+  copy:
+    src: roles/deploy-pgsql-workload/files/start-pgsql-load.sh
+    dest: "{{temp_workload_dir}}"
+  tags: pgsql
+
+- name: Start executing load on pgsql
+  shell: |
+    nohup sh ./start-pgsql-load.sh \
+      "{{pgsql_namespace}}" "{{pgsql_pod_name.stdout}}" >> start-pgsql-load.log 2>&1 &
+  args:
+    chdir: "{{temp_workload_dir}}"
+  async: 0
+  poll: 0
+  tags: pgsql

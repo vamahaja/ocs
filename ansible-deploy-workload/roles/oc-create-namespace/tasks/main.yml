@@ -1,0 +1,13 @@
+---
+# tasks file for create-namespace
+
+- name: Create new namespace
+  shell: |
+    oc create namespace {{namespace}}
+  register: namespace_output
+
+- name: Change namespace if created
+  shell: |
+    oc project {{namespace}}
+  register: project
+  when: namespace_output.stdout.find("created") != -1

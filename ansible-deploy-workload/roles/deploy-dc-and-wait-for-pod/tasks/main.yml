@@ -1,0 +1,31 @@
+---
+# tasks file for deploy-and-wait-for-pod
+
+- name: Set varibles for template parameters
+  set_fact:
+    dc_template_path: "{{template_path}}"
+    dc_parameters: "{{parameters}}"
+    dc_namespace: "{{namespace}}" 
+- include: ../../oc-process/tasks/main.yml
+  vars:
+    namespace: "{{dc_namespace}}"
+    template_path: "{{dc_template_path}}"
+    parameters: "{{dc_parameters}}"
+- name: Wait for DC deploy pod to start
+  pause:
+    seconds: 3
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{dc_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{dc_name}}
+  register: pod_name
+- name: Wait until pod is in 'Running' and 'Ready' state
+  shell: |
+    oc get pods -n {{dc_namespace}} {{pod_name.stdout}} --no-headers \
+      -o=custom-columns=:.status.containerStatuses[0].ready,:.status.phase
+  register: pod_status
+  until: >
+    pod_status.stdout.find("Running") != -1
+      and pod_status.stdout.find("true") != -1
+  retries: 120
+  delay: 5

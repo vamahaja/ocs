@@ -1,0 +1,101 @@
+---
+# tasks file for deploy-mongo-workload
+
+- name: Set variables for mongo
+  set_fact:
+    remote_mongo_template_path: "{{mongo_workload_dir}}/mongo-template.yml"
+    remote_ycsb_template_path: "{{mongo_workload_dir}}/ycsb-template.yml"
+
+    mongo_namespace: "{{mongo_prefix}}-namespace"
+    mongo_dc_name: "{{mongo_prefix}}"
+    ycsb_dc_name: "{{mongo_prefix}}-ycsb"
+    mongo_pvc_name: "{{mongo_prefix}}-pvc"
+  tags: mongo
+
+- include: roles/oc-create-namespace/tasks/main.yml
+  vars:
+    namespace: "{{mongo_namespace}}"
+  tags: mongo
+
+- name: Create PVC for mongo pod
+  include: roles/deploy-and-wait-for-pvc/tasks/main.yml
+  vars:
+    namespace: "{{mongo_namespace}}"
+    temp_dir : "{{mongo_workload_dir}}"
+    pvc_name: "{{mongo_pvc_name}}"
+    volume_capacity: "{{mongo_pvc_size}}"
+    storage_class_name: "{{mongo_storage_class}}"
+  tags: mongo
+
+- name: Copy mongo template file to oc-master node
+  copy:
+    src: roles/deploy-mongo-workload/templates/mongo-template.yml
+    dest: "{{remote_mongo_template_path}}"
+  tags: mongo
+- include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{mongo_namespace}}"
+    dc_name: "{{mongo_dc_name}}"
+    template_path: "{{remote_mongo_template_path}}"
+    parameters: >
+      DATABASE_SERVICE_NAME={{mongo_dc_name}}
+      MONGO_PVC_NAME={{mongo_pvc_name}}
+  tags: mongo
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{mongo_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{mongo_dc_name}}
+  register: mongo_pod_name
+  tags: mongo
+- name: Get pod IP from deployment config
+  shell: |
+    oc get pods -n {{mongo_namespace}} --no-headers \
+      -o=custom-columns=:.status.podIP --selector deploymentconfig={{mongo_dc_name}}
+  register: mongo_pod_addr
+  tags: mongo
+
+- name: Copy ycsb template file to oc-master node
+  copy:
+    src: roles/deploy-mongo-workload/templates/ycsb-template.yml
+    dest: "{{remote_ycsb_template_path}}"
+  tags: mongo
+- include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{mongo_namespace}}"
+    dc_name: "{{ycsb_dc_name}}"
+    template_path: "{{remote_ycsb_template_path}}"
+    parameters: >
+      YCSB_DC_NAME={{ycsb_dc_name}}
+  tags: mongo
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{mongo_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{ycsb_dc_name}}
+  register: ycsb_pod_name
+  tags: mongo
+
+- name: Set workload temporary directory
+  set_fact:
+    temp_workload_dir: "{{mongo_workload_dir}}/{{ycsb_pod_name.stdout}}"
+  tags: mongo
+- name: Create temporary directory to copy script files
+  file:
+    path: "{{temp_workload_dir}}"
+    state: directory
+  tags: mongo
+- name: Copy config files on oc-master node
+  copy:
+    src: roles/deploy-mongo-workload/files/start-mongo-load.sh
+    dest: "{{temp_workload_dir}}"
+  tags: mongo
+
+- name: Start executing load on mongo
+  shell: |
+    nohup sh ./start-mongo-load.sh \
+      "{{mongo_namespace}}" "{{mongo_pod_name.stdout}}" "{{ycsb_pod_name.stdout}}" "{{mongo_pod_addr.stdout}}" \
+      >> start-mongo-load.log 2>&1 &
+  args:
+    chdir: "{{temp_workload_dir}}"
+  async: 0
+  poll: 0
+  tags: mongo

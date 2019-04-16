@@ -1,0 +1,19 @@
+---
+# tasks file for oc-process
+
+- name: Set parameters
+  set_fact:
+    temp_template_path: "/tmp/{{99999999 | random | to_uuid}}.tmp"
+
+- name: Create oc resource template on oc-master node
+  shell: |
+    oc process -f {{template_path}} {{parameters}}
+  register: oc_process_output
+- name: Create oc resource file on oc-master node
+  copy:
+    content: "{{oc_process_output.stdout}}"
+    dest: "{{temp_template_path}}"
+- name: Create oc resources on oc-master node
+  shell: |
+    oc create -f {{temp_template_path}}
+  register: oc_resource

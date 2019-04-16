@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: ycsb-template
+objects:
+  - kind: 'DeploymentConfig'
+    apiVersion: 'v1'
+    metadata:
+      name: ${YCSB_DC_NAME}
+    spec:
+      template:
+        metadata:
+          labels:
+            name: 'ycsb'
+        spec:
+          containers:
+            - name: 'ycsb'
+              image: 'docker.io/hongkailiu/ycsb:002'
+      triggers:
+        - type: 'ConfigChange'
+      replicas: 1
+parameters:
+- description: Name of YCSB deployment config
+  displayName: YCSB DC Name
+  name: YCSB_DC_NAME
+  required: true

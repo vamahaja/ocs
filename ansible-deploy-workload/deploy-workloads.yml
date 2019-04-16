@@ -1,0 +1,71 @@
+
+- name: Playbook to deploy jenkins pods with workloads
+  hosts: oc-master
+  gather_facts: false
+  vars:
+  pre_tasks:
+    - name: Create workload directory to copy config files
+      file:
+        path: "{{workload_dir}}"
+        state: directory
+      tags: always
+  tasks:
+    - name: Set variable for Jenkins workloads
+      set_fact:
+        pod_prefix: "{{prefix|default('autotest-jenkins')}}"
+        jenkins_workload_dir: "{{workload_dir}}/jenkins"
+      tags: always
+    - name: Create workload directory to copy config files
+      file:
+        path: "{{jenkins_workload_dir}}"
+        state: directory
+      tags: always
+    - name: Deploy Jenkins workload
+      include_role: 
+        name: deploy-jenkins-workload
+      vars:
+        jenkins_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        jenkins_storage_class: "{{storage_class}}"
+        jenkins_pvc_size: "{{pvc_size | default('1Gi')}}"
+      with_sequence: start=1 end={{count|int}}
+      tags: always
+
+    - name: Set variable for MongoDb workloads
+      set_fact:
+        pod_prefix: "{{prefix|default('autotest-mongo')}}"
+        mongo_workload_dir: "{{workload_dir}}/mongo"
+      tags: always
+    - name: Create workload directory to copy config files
+      file:
+        path: "{{mongo_workload_dir}}"
+        state: directory
+      tags: always
+    - name: Deploy MongoDB workload
+      include_role: 
+        name: deploy-mongo-workload
+      vars:
+        mongo_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        mongo_storage_class: "{{storage_class}}"
+        mongo_pvc_size: "{{pvc_size|default('3Gi')}}"
+      with_sequence: start=1 end={{count|int}}
+      tags: always
+
+    - name: Set variable for PGSql workloads
+      set_fact:
+        pod_prefix: "{{prefix | default('autotest-pgsql')}}"
+        pgsql_workload_dir: "{{workload_dir}}/pgsql"
+      tags: always
+    - name: Create workload directory to copy config files
+      file:
+        path: "{{pgsql_workload_dir}}"
+        state: directory
+      tags: always
+    - name: Deploy PGSql workload
+      include_role: 
+        name: deploy-pgsql-workload
+      vars:
+        pgsql_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        pgsql_storage_class: "{{storage_class}}"
+        pgsql_pvc_size: "{{pvc_size|default('3Gi')}}"
+      with_sequence: start=1 end={{count|int}}
+      tags: always

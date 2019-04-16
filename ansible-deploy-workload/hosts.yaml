@@ -1,0 +1,2 @@
+[oc-master]
+ansible_ssh_host=<openshift_master_node> ansible_user=<openshift_master_node_username>  ansible_ssh_pass=<openshift_master_password>

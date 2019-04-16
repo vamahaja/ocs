@@ -1,0 +1,111 @@
+---
+# tasks file for deploy-jenkins-and-start-workload
+
+- name: Set variables for jenkins
+  set_fact:
+    remote_jenkins_template_path: "{{jenkins_workload_dir}}/jenkins-template.yml"
+    remote_jjb_template_path: "{{jenkins_workload_dir}}/jjb-template.yml"
+
+    jenkins_namespace: "{{jenkins_prefix}}-namespace"
+    jenkins_dc_name: "{{jenkins_prefix}}"
+    jjb_dc_name: "{{jenkins_prefix}}-jjb"
+    jjb_cm_name: "{{jenkins_prefix}}-cm"
+    jenkins_pvc_name: "{{jenkins_prefix}}-pvc"
+  tags: jenkins
+
+- include: roles/oc-create-namespace/tasks/main.yml
+  vars:
+    namespace: "{{jenkins_namespace}}"
+  tags: jenkins
+
+- name: Create PVC
+  include: roles/deploy-and-wait-for-pvc/tasks/main.yml
+  vars:
+    namespace: "{{jenkins_namespace}}"
+    temp_dir : "{{jenkins_workload_dir}}"
+    pvc_name: "{{jenkins_pvc_name}}"
+    volume_capacity: "{{jenkins_pvc_size}}"
+    storage_class_name: "{{jenkins_storage_class}}"
+  tags: jenkins
+
+- name: Copy jenkins template file to oc-master node
+  copy:
+    src: roles/deploy-jenkins-workload/templates/jenkins-template.yml
+    dest: "{{remote_jenkins_template_path}}"
+  tags: jenkins
+- include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{jenkins_namespace}}"
+    dc_name: "{{jenkins_dc_name}}"
+    template_path: "{{remote_jenkins_template_path}}"
+    parameters: >
+      JENKINS_SERVICE_NAME={{jenkins_dc_name}}
+      JNLP_SERVICE_NAME=jnlp-{{jenkins_dc_name}}
+      JENKINS_PVC_NAME={{jenkins_pvc_name}}
+  tags: jenkins
+
+- name: Get rote host address
+  shell: |
+    oc get route -n {{jenkins_namespace}} \
+      "{{jenkins_dc_name}}" --no-headers -o=custom-columns=:spec.host
+  register: route_host_addr
+  tags: jenkins
+
+- name: Copy JJB template file to oc-master node
+  copy:
+    src: roles/deploy-jenkins-workload/templates/jjb-template.yml
+    dest: "{{remote_jjb_template_path}}"
+  tags: jenkins
+- include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{jenkins_namespace}}"
+    dc_name: "{{jjb_dc_name}}"
+    template_path: "{{remote_jjb_template_path}}"
+    parameters: >
+      JJB_CONFIG_MAP_NAME={{jjb_cm_name}}
+      JJB_DC_NAME={{jjb_dc_name}}
+      JENKINS_USER=admin
+      JENKINS_PASSWORD=password
+      JENKINS_URL=https://{{route_host_addr.stdout}}
+  tags: jenkins
+
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{jenkins_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{jjb_dc_name}}
+  register: jjb_pod_name
+  tags: jenkins
+- name: Set workload temporary directory
+  set_fact:
+    temp_workload_dir: "{{jenkins_workload_dir}}/{{jjb_pod_name.stdout}}"
+  tags: jenkins
+- name: Create temporary directory to copy script files
+  file:
+    path: "{{temp_workload_dir}}"
+    state: directory
+  tags: jenkins
+
+- name: Copy config files on oc-master node
+  copy:
+    src: "{{item}}"
+    dest: "{{temp_workload_dir}}"
+  with_items:
+    - roles/deploy-jenkins-workload/files/jobs
+    - roles/deploy-jenkins-workload/files/start-jenkins-load.sh
+  tags: jenkins
+
+- name: Copy JJB config files on JJB pod
+  shell: |
+    oc rsync -n {{jenkins_namespace}} "{{temp_workload_dir}}/jobs/" "{{jjb_pod_name.stdout}}:/data"
+  register: copy_config_output
+  tags: jenkins
+- name: Start executing load on Jenkins
+  shell: |
+    nohup sh ./start-jenkins-load.sh \
+      "{{jenkins_namespace}}" "{{jjb_pod_name.stdout}}" "{{route_host_addr.stdout}}" 2 29 \
+      >> start-jenkins-load.log 2>&1 &
+  args:
+    chdir: "{{temp_workload_dir}}"
+  async: 0
+  poll: 0
+  tags: jenkins
