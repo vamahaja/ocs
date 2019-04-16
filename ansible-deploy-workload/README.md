@@ -1,6 +1,6 @@
 # Ansible Openshift Workload Deploayment
 
-This repository contains playbook to deploy MongoDB, Jenkins & PGSql deployment support. It will deploy respective pod and start executing IO's on the pod.
+This repository contains  deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
 
 ## Deploying Pods with playbook
 
