@@ -1,18 +1,18 @@
 # Ansible Openshift Workload Deploayment
 
-This repository contains  deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
+This repository contains deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
 
 ## Deploying Pods with playbook
 
 ### Create host file
 ```
 [oc-master]
-ansible_ssh_host=<openshift_master_node> ansible_user=<openshift_master_node_username>  ansible_ssh_pass=<openshift_master_password>
+<openshift_master_node> ansible_user=<openshift_master_node_username>   ansible_ssh_pass=<openshift_master_password>
 ```
 For example:
 ```
 [oc-master]
-ansible_ssh_host=openshift.master.node.com ansible_user=ocs123  ansible_ssh_pass=password
+openshift.master.node.com ansible_user=ocs123 ansible_ssh_pass=password
 ```
 ### Execute playbook
 
