@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: MongoDB-YCSB Template
+objects:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      name: ${MONGO_SERVICE_NAME}
+    spec:
+      replicas: 1
+      selector:
+        name: ${MONGO_SERVICE_NAME}
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            name: ${MONGO_SERVICE_NAME}
+        spec:
+          containers:
+          - capabilities: {}
+            env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: ${MONGO_INITDB_ROOT_USERNAME}
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: ${MONGO_INITDB_ROOT_PASSWORD}
+            - name: MONGODB_DATABASE
+              value: ${MONGODB_DATABASE}
+            - name: YCSB_THREADCOUNT
+              value: ${YCSB_THREADCOUNT}
+            - name: YCSB_WORKLOADS
+              value: ${YCSB_WORKLOADS}
+            - name: YCSB_RECORDCOUNT
+              value: ${YCSB_RECORDCOUNT}
+            - name: YCSB_OPERATIONCOUNT
+              value: ${YCSB_OPERATIONCOUNT}
+            image: ${MONGO_IMAGE}
+            imagePullPolicy: IfNotPresent
+            livenessProbe:
+              initialDelaySeconds: 60
+              tcpSocket:
+                port: 27017
+              timeoutSeconds: 5
+            name: mongodb
+            ports:
+            - containerPort: 27017
+              protocol: TCP
+            readinessProbe:
+              exec:
+                command:
+                  - /bin/sh
+                  - -ic
+                  - mongo --port 27017 --eval "rs.status()" | grep -vq "REMOVED"
+              initialDelaySeconds: 60
+              timeoutSeconds: 5
+            securityContext:
+              capabilities: {}
+              privileged: false
+            terminationMessagePath: /dev/termination-log
+            volumeMounts:
+            - mountPath: /data/db
+              name: ${MONGO_PVC_NAME}-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+          - name: ${MONGO_PVC_NAME}-data
+            persistentVolumeClaim:
+              claimName: ${MONGO_PVC_NAME}
+    status: {}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${MONGO_SERVICE_NAME}
+    spec:
+      type: NodePort
+      ports:
+        - port: 8080
+          targetPort: 8080
+      selector:
+        name: ${MONGO_SERVICE_NAME}
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${MONGO_PVC_NAME}
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: ${VOLUME_CAPACITY}
+      storageClassName: ${STORAGE_CLASS_NAME}
+parameters:
+- description: Name of the Service 
+  displayName: Mongo Service Name
+  name: MONGO_SERVICE_NAME
+  required: true
+- description: Username of MongoDB
+  displayName: MongoDb root db username
+  name: MONGO_INITDB_ROOT_USERNAME
+  required: true
+  value: "redhat"
+- description: Password of MongoDB
+  displayName: MongoDb root db password
+  name: MONGO_INITDB_ROOT_PASSWORD
+  required: true
+  value: "redhat"
+- description: Name of MongoDb database
+  displayName: MongoDb database
+  name: MONGODB_DATABASE
+  required: true
+  value: "smple-db"
+- description: Thread count for YCSB
+  displayName: Thread count for YCSB
+  name: YCSB_THREADCOUNT
+  required: true
+  value: "10"
+- description: Workload types for YCSB
+  displayName: Workload types for YCSB
+  name: YCSB_WORKLOADS
+  required: true
+  value: "workloada,workloadb,workloadc"
+- description: Record count for YCSB
+  displayName: Record count for YCSB
+  name: YCSB_RECORDCOUNT
+  required: true
+  value: "1000"
+- description: Operation count for YCSB
+  displayName: Operation count for YCSB
+  name: YCSB_OPERATIONCOUNT
+  required: true
+  value: "1000"
+- description: MongoDb image name & Version
+  displayName: MongoDb image name & Version
+  name: MONGO_IMAGE
+  required: true
+  value: vamahaja/mongo-ycsb-workload:4.0.6-0.13.0
+- description: Name of MongoDb PVC
+  displayName: MongoDb PVC Name
+  name: MONGO_PVC_NAME
+  required: true
+- description: Volume capacity for MongoDb PVC
+  displayName: PVC Volume Capacity
+  name: VOLUME_CAPACITY
+  required: true
+  value: 3Gi
+- description: Name of MongoDb PVC Storage Class
+  displayName: Storage Class Name
+  name: STORAGE_CLASS_NAME
+  required: true
