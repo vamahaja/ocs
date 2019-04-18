@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: Jenkins JJB Template
+objects:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      name: ${JENKINS_SERVICE_NAME}
+    spec:
+      replicas: 1
+      selector:
+        name: ${JENKINS_SERVICE_NAME}
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            name: ${JENKINS_SERVICE_NAME}
+        spec:
+          containers:
+            - name: ${JENKINS_SERVICE_NAME}
+              image: ${JENKINS_IMAGE}
+              env:
+                - name: JAVA_OPTS
+                  value: -Djenkins.install.runSetupWizard=false
+                - name: EXECUTORS
+                  value: ${EXECUTORS}
+              ports:
+                - name: http-port
+                  containerPort: 8080
+                - name: jnlp-port
+                  containerPort: 50000
+              volumeMounts:
+                - name: ${JENKINS_PVC_NAME}-data
+                  mountPath: /var/jenkins_home
+          volumes:
+            - name: ${JENKINS_PVC_NAME}-data
+              persistentVolumeClaim: 
+                claimName: ${JENKINS_PVC_NAME}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${JENKINS_SERVICE_NAME}
+    spec:
+      type: NodePort
+      ports:
+        - port: 8080
+          targetPort: 8080
+      selector:
+        name: ${JENKINS_SERVICE_NAME}
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${JENKINS_PVC_NAME}
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: ${VOLUME_CAPACITY}
+      storageClassName: ${STORAGE_CLASS_NAME}
+parameters:
+- description: Name of Jenkkins Servive Name
+  displayName: Jenkins Service Name
+  name: JENKINS_SERVICE_NAME
+  required: true
+- description: Name & tag of Jenkins/JJB image
+  displayName: Jenkins/JJB image Name & tag
+  name: JENKINS_IMAGE
+  required: true
+  value: vamahaja/jenkins-jjb-workload:2.60.3-2.9.1 
+- description: Name of PVC
+  displayName: PVC name
+  name: JENKINS_PVC_NAME
+  required: true
+- description: Volume space available for data, e.g. 512Mi, 2Gi.
+  displayName: Volume Capacity
+  name: VOLUME_CAPACITY
+  required: true
+  value: 1Gi
+- description: Storage Class Name of PVC
+  displayName: Storage Class Name
+  name: STORAGE_CLASS_NAME
+  required: true
+- description: No of Job parallely executed on Jenkins
+  displayName: Executors on Jenkins
+  name: EXECUTORS
+  required: true
+  value: "8"

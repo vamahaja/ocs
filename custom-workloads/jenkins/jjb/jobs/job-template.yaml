@@ -1,0 +1,20 @@
+- job-template:
+    name: '{name}-job'
+    description: 'Job to generate load'
+    project-type: freestyle
+    number-to-keep: 100
+    days-to-keep: 30
+    builders:
+      - shell: | 
+          mkdir $WORKSPACE/$BUILD_NUMBER
+
+          for i in `seq 1 800`; do
+          	echo "Iteration: $i"
+              head -c 131072 < /dev/urandom \
+              	>> $WORKSPACE/$BUILD_NUMBER/random-data-$JOB_NAME-$BUILD_NUMBER.log \
+                  || \
+                  exit 1;
+              sleep 1;
+          done
+
+          rm -rf $WORKSPACE/$BUILD_NUMBER/random-data-$JOB_NAME-$BUILD_NUMBER.log
