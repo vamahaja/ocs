@@ -1,0 +1,78 @@
+---
+# tasks file for deploy-amq-workload
+
+- name: Set variables for amq
+  set_fact:
+    remote_amq_template_path: "{{amq_workload_dir}}/amq-template.yml"
+
+    amq_namespace: "{{amq_prefix}}-namespace"
+    amq_dc_name: "{{amq_prefix}}"
+    amq_pvc_name: "{{amq_prefix}}-pvc"
+
+    message_count: "{{amq_message_count | default('1000')}}"
+    message_size: "{{amq_message_size | default('1000')}}"
+    iterations: "{{amq_iterations | default('10')}}"
+  tags: amq
+
+- include: roles/oc-create-namespace/tasks/main.yml
+  vars:
+    namespace: "{{amq_namespace}}"
+  tags: amq
+
+- name: Create PVC
+  include: roles/deploy-and-wait-for-pvc/tasks/main.yml
+  vars:
+    namespace: "{{amq_namespace}}"
+    temp_dir : "{{amq_workload_dir}}"
+    pvc_name: "{{amq_pvc_name}}"
+    volume_capacity: "{{amq_pvc_size}}"
+    storage_class_name: "{{amq_storage_class}}"
+  tags: amq
+
+- name: Copy amq template file to oc-master node
+  copy:
+    src: roles/deploy-amq-workload/templates/amq-template.yml
+    dest: "{{remote_amq_template_path}}"
+  tags: amq
+- include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{amq_namespace}}"
+    dc_name: "{{amq_dc_name}}"
+    template_path: "{{remote_amq_template_path}}"
+    parameters: >
+      APPLICATION_NAME={{amq_dc_name}}
+      AMQ_PVC_NAME={{amq_pvc_name}}
+  tags: amq
+
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{amq_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{amq_dc_name}}
+  register: amq_pod_name
+  tags: amq
+
+- name: Set workload temporary directory
+  set_fact:
+    temp_workload_dir: "{{amq_workload_dir}}/{{amq_pod_name.stdout}}"
+  tags: amq
+- name: Create temporary directory to copy script files
+  file:
+    path: "{{temp_workload_dir}}"
+    state: directory
+  tags: amq
+- name: Copy config files on oc-master node
+  copy:
+    src: roles/deploy-amq-workload/files/start-amq-load.sh
+    dest: "{{temp_workload_dir}}"
+  tags: amq
+- name: Start executing load on amq
+  shell: |
+    nohup sh ./start-amq-load.sh \
+      "{{amq_namespace}}" "{{amq_pod_name.stdout}}" \
+      "{{message_count}}" "{{message_size}}" "{{iterations}}" \
+      >> start-amq-load.log 2>&1 &
+  args:
+    chdir: "{{temp_workload_dir}}"
+  async: 0
+  poll: 0
+  tags: amq

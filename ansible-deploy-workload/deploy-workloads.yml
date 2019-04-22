@@ -69,3 +69,23 @@
         pgsql_pvc_size: "{{pvc_size|default('3Gi')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
+
+    - name: Set variable for AMQ workloads
+      set_fact:
+        pod_prefix: "{{prefix | default('autotest-amq')}}"
+        amq_workload_dir: "{{workload_dir}}/amq"
+      tags: always
+    - name: Create workload directory to copy config files
+      file:
+        path: "{{amq_workload_dir}}"
+        state: directory
+      tags: always
+    - name: Deploy AMQ workload
+      include_role:
+        name: deploy-amq-workload
+      vars:
+        amq_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        amq_storage_class: "{{storage_class}}"
+        amq_pvc_size: "{{pvc_size|default('3Gi')}}"
+      with_sequence: start=1 end={{count|int}}
+      tags: always
