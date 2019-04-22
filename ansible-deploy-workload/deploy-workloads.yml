@@ -19,7 +19,7 @@
       file:
         path: "{{jenkins_workload_dir}}"
         state: directory
-      tags: always
+      tags: jenkins
     - name: Deploy Jenkins workload
       include_role: 
         name: deploy-jenkins-workload
@@ -39,7 +39,7 @@
       file:
         path: "{{mongo_workload_dir}}"
         state: directory
-      tags: always
+      tags: mongo
     - name: Deploy MongoDB workload
       include_role: 
         name: deploy-mongo-workload
@@ -59,7 +59,7 @@
       file:
         path: "{{pgsql_workload_dir}}"
         state: directory
-      tags: always
+      tags: pgsql
     - name: Deploy PGSql workload
       include_role: 
         name: deploy-pgsql-workload
@@ -79,7 +79,7 @@
       file:
         path: "{{amq_workload_dir}}"
         state: directory
-      tags: always
+      tags: amq
     - name: Deploy AMQ workload
       include_role:
         name: deploy-amq-workload
