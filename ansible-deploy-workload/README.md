@@ -3,7 +3,8 @@
 This repository contains deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
 
 ## Prerequisites
-Host machine with Ansible Version 2.7.10 or more
+* Host machine with Ansible Version 2.7.10 or more
+* Install [jq](https://stedolan.github.io/jq/) package on oc-master node
 
 ## Deploying Pods with playbook
 
