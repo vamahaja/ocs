@@ -2,10 +2,10 @@
 
 This repository contains deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
 
-## Deploying Pods with playbook
-
-### Prerequisites
+## Prerequisites
 Host machine with Ansible Version 2.7.10
+
+## Deploying Pods with playbook
 
 ### Create host file
 ```
