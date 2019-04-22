@@ -3,7 +3,7 @@
 This repository contains deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
 
 ## Prerequisites
-Host machine with Ansible Version 2.7.10
+Host machine with Ansible Version 2.7.10 or more
 
 ## Deploying Pods with playbook
 
@@ -29,5 +29,5 @@ For example:
 ```
 * Execute with multiple pod tags "mongo,jenkins,pgsql"
 ```
-# ansible-playbook deploy-workloads.yml -i hosts.yaml --tags "mongo,jenkins,pgsql" -e count=5 -e storage_class=glusterfs-storage-block
+# ansible-playbook deploy-workloads.yml -i hosts.yaml --tags "mongo,jenkins,pgsql,amq" -e count=5 -e storage_class=glusterfs-storage-block
 ```
