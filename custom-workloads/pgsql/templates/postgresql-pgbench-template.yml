@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: PGSQL-PGBench Template
+objects:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      name: '${POSTGRESQL_SERVICE_NAME}'
+    spec:
+      replicas: 1
+      selector:
+        name: '${POSTGRESQL_SERVICE_NAME}'
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            name: '${POSTGRESQL_SERVICE_NAME}'
+        spec:
+          containers:
+          - capabilities: {}
+            env:
+            - name: POSTGRESQL_USER
+              value: ${POSTGRESQL_USER}
+            - name: POSTGRESQL_PASSWORD
+              value: ${POSTGRESQL_PASSWORD}
+            - name: POSTGRESQL_DATABASE
+              value: ${POSTGRESQL_DATABASE}
+            - name: PGBENCH_DATABASE
+              value: ${PGBENCH_DATABASE}
+            - name: PGBENCH_SCALINGCOUNT
+              value: ${PGBENCH_SCALINGCOUNT}
+            - name: PGBENCH_SCALINGCOUNT
+              value: ${PGBENCH_SCALINGCOUNT}
+            - name: PGBENCH_THREADCOUNT
+              value: ${PGBENCH_THREADCOUNT}
+            - name: PGBENCH_TRANSACTIONSCOUNT
+              value: ${PGBENCH_TRANSACTIONSCOUNT}
+            image: ${POSTGRESQL_IMAGE}
+            imagePullPolicy: IfNotPresent
+            livenessProbe:
+              exec:
+                command:
+                - /usr/libexec/check-container
+                - --live
+              initialDelaySeconds: 5
+              timeoutSeconds: 10
+            name: postgresql
+            ports:
+            - containerPort: 5432
+              protocol: TCP
+            readinessProbe:
+              exec:
+                command:
+                - /usr/libexec/check-container
+              initialDelaySeconds: 5
+              timeoutSeconds: 1
+            securityContext:
+              capabilities: {}
+              privileged: false
+            terminationMessagePath: /dev/termination-log
+            volumeMounts:
+            - mountPath: /var/lib/pgsql/data
+              name: ${POSTGRESQL_PVC_NAME}-data
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          volumes:
+          - name: ${POSTGRESQL_PVC_NAME}-data
+            persistentVolumeClaim:
+              claimName: ${POSTGRESQL_PVC_NAME}
+      triggers:
+      - type: ConfigChange
+    status: {}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${POSTGRESQL_SERVICE_NAME}
+    spec:
+      type: NodePort
+      ports:
+        - port: 8080
+          targetPort: 8080
+      selector:
+        name: ${POSTGRESQL_SERVICE_NAME}
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: ${POSTGRESQL_PVC_NAME}
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: ${VOLUME_CAPACITY}
+      storageClassName: ${STORAGE_CLASS_NAME}
+parameters:
+- description: Name of the Service 
+  displayName: PGSQL Service Name
+  name: POSTGRESQL_SERVICE_NAME
+  required: true
+- description: User name of the PostgreSql DB
+  displayName: PostgreSql DB User Name
+  name: POSTGRESQL_USER
+  value: 'redhat'
+- description: Password of the PostgreSql DB
+  displayName: PostgreSql DB Password
+  name: POSTGRESQL_PASSWORD
+  value: 'redhat'
+- description: Database for the PostgreSql DB
+  displayName: PostgreSql Database
+  name: POSTGRESQL_DATABASE
+  value: 'postgres'
+- description: PGSQL image name & Version
+  displayName: PGSQL image name & Version
+  name: POSTGRESQL_IMAGE
+  required: true
+  value: vamahaja/pgsql-pgbench-workload:9.6
+- description: Name of PGSQL PVC
+  displayName: PGSQL PVC Name
+  name: POSTGRESQL_PVC_NAME
+  required: true
+- description: Volume capacity for PGSQL PVC
+  displayName: PVC Volume Capacity
+  name: VOLUME_CAPACITY
+  required: true
+  value: 3Gi
+- description: Name of PGSQL PVC Storage Class
+  displayName: Storage Class Name
+  name: STORAGE_CLASS_NAME
+  required: true
+- description: Name of the Database used for PGBench 
+  displayName: PGBench database name
+  name: PGBENCH_DATABASE
+  value: 'sample-db'
+- description: Count for scaling in PGBench
+  displayName: PGBench scale count
+  name: PGBENCH_SCALINGCOUNT
+  value: '4000'
+- description: Count for clients in PGBench
+  displayName: PGBench client count
+  name: PGBENCH_CLIENTGCOUNT
+  value: '10'
+- description: Count for threads in PGBench
+  displayName: PGBench thread count
+  name: PGBENCH_THREADCOUNT
+  value: '2'
+- description: Count for transactions in PGBench
+  displayName: PGBench trasanctions count
+  name: PGBENCH_TRANSACTIONSCOUNT
+  value: '1000'
