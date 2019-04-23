@@ -1,4 +1,4 @@
-# Ansible Openshift Workload Deploayment
+# Ansible Openshift Workload Deployment
 
 This repository contains deployment support for MongoDB, Jenkins & PGSql. It will deploy respective pod and start executing IO's on the pod.
 
