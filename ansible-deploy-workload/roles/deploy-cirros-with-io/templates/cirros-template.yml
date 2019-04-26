@@ -1,0 +1,66 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: This pod will run IO on underlined PVC.
+  name: cirros-with-io
+objects:
+- kind: 'DeploymentConfig'
+  apiVersion: 'v1'
+  metadata:
+    name: ${DC_NAME}
+  spec:
+    template:
+      metadata:
+        labels:
+          name: ${DC_NAME}
+      spec:
+        restartPolicy: 'Always'
+        volumes:
+        - name: 'cirros-vol'
+          persistentVolumeClaim:
+            claimName: ${CLAIM_NAME}
+        containers:
+        - name: 'cirros'
+          image: 'cirros'
+          imagePullPolicy: 'IfNotPresent'
+          volumeMounts:
+          - mountPath: '/mnt'
+            name: 'cirros-vol'
+          command: ['sh']
+          args:
+          - '-ec'
+          - 'while true; do
+                 (mount | grep /mnt) && (head -c ${IO_SIZE} < /dev/urandom > /mnt/random-data.log) || exit 1;
+                 sleep 20 ;
+             done'
+          livenessProbe:
+            exec:
+              command:
+              - 'sh'
+              - '-ec'
+              - 'mount | grep /mnt && head -c 1024 < /dev/urandom >> /mnt/random-data.log'
+            initialDelaySeconds: 3
+            periodSeconds: 3
+    replicas: 1
+    triggers:
+      - type: 'ConfigChange'
+    paused: false
+    revisionHistoryLimit: 2
+
+parameters:
+- description: Name of the deplyement Config
+  displayName: DC Name
+  name: DC_NAME
+  required: true
+  value: cirros
+- description: Name of the PVC
+  displayName: PVC Name
+  name: CLAIM_NAME
+  required: true
+  value: claim
+- description: Size of IO in bytes
+  displayName: IO size
+  name: IO_SIZE
+  required: true
+  value: '1048576'
