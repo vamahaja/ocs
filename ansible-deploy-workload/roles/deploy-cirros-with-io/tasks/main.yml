@@ -1,0 +1,43 @@
+---
+# tasks file for deploy-cirros-with-IO
+
+ - name: Set variables for cirros
+  set_fact:
+    remote_cirros_template_path: "{{cirros_workload_dir}}/cirros-template.yml"
+    cirros_namespace: "{{cirros_prefix}}-namespace"
+    cirros_dc_name: "{{cirros_prefix}}"
+    cirros_pvc_name: "{{cirros_prefix}}-pvc"
+  tags: cirros
+
+ - name: Create namespace for cirros pod
+  include: roles/oc-create-namespace/tasks/main.yml
+  vars:
+    namespace: "{{cirros_namespace}}"
+  tags: cirros
+
+ - name: Create PVC for cirros pod
+  include: roles/deploy-and-wait-for-pvc/tasks/main.yml
+  vars:
+    namespace: "{{cirros_namespace}}"
+    temp_dir : "{{cirros_workload_dir}}"
+    pvc_name: "{{cirros_pvc_name}}"
+    volume_capacity: "{{cirros_pvc_size}}"
+    storage_class_name: "{{cirros_storage_class}}"
+  tags: cirros
+
+ - name: Copy cirros template file to oc-master node
+  copy:
+    src: roles/deploy-cirros-with-io/templates/cirros-template.yml
+    dest: "{{remote_cirros_template_path}}"
+  tags: cirros
+
+ - name: deploy cirros app pod and wait for it to come up
+  include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{cirros_namespace}}"
+    dc_name: "{{cirros_dc_name}}"
+    template_path: "{{remote_cirros_template_path}}"
+    parameters: >
+      DC_NAME="{{cirros_dc_name}}"
+      CLAIM_NAME="{{cirros_pvc_name}}"
+  tags: cirros

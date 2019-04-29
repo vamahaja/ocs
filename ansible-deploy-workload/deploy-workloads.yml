@@ -89,3 +89,23 @@
         amq_pvc_size: "{{pvc_size|default('3Gi')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
+
+    - name: set variables for cirros app pods
+￼     set_fact:
+￼       pod_prefix: "{{prefix|default('autotest-cirros')}}"
+  ￼     cirros_workload_dir: "{{workload_dir}}/cirros"
+      tags: always
+    - name: create workload directory to copy config files
+      file:
+        path: "{{cirros_workload_dir}}"
+        state: directory
+      tags: cirros
+    - name: deploy cirros app pod with io
+      include_role:
+        name: deploy-cirros-with-io
+      vars:
+        cirros_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        cirros_storage_class: "{{storage_class}}"
+        cirros_pvc_size: "{{pvc_size|default('1Gi')}}"
+      with_sequence: start=1 end={{count|int}}
+      tags: always
