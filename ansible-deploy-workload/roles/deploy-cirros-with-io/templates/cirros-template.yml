@@ -47,18 +47,15 @@ objects:
       - type: 'ConfigChange'
     paused: false
     revisionHistoryLimit: 2
-
- parameters:
+parameters:
 - description: Name of the deplyement Config
   displayName: DC Name
   name: DC_NAME
   required: true
-  value: cirros
 - description: Name of the PVC
   displayName: PVC Name
   name: CLAIM_NAME
   required: true
-  value: claim
 - description: Size of IO in bytes
   displayName: IO size
   name: IO_SIZE
