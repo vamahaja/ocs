@@ -11,6 +11,7 @@
     jjb_dc_name: "{{jenkins_prefix}}-jjb"
     jjb_cm_name: "{{jenkins_prefix}}-cm"
     jenkins_pvc_name: "{{jenkins_prefix}}-pvc"
+    jenkins_test_build_number: "{{test_build_number}}"
   tags: jenkins
 
 - include: roles/oc-create-namespace/tasks/main.yml
@@ -101,9 +102,8 @@
   tags: jenkins
 - name: Start executing load on Jenkins
   shell: |
-    nohup sh ./start-jenkins-load.sh \
-      "{{jenkins_namespace}}" "{{jjb_pod_name.stdout}}" "{{route_host_addr.stdout}}" 2 29 \
-      >> start-jenkins-load.log 2>&1 &
+    nohup sh ./start-jenkins-load.sh "{{jenkins_namespace}}" "{{jjb_pod_name.stdout}}" \
+      "{{route_host_addr.stdout}}" "{{jenkins_test_build_number}}" >> start-jenkins-load.log 2>&1 &
   args:
     chdir: "{{temp_workload_dir}}"
   async: 0

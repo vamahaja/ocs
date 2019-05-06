@@ -4,8 +4,7 @@ readonly NAMESPACE=${1}
 readonly JJB_POD=${2}
 readonly JENKINS_URL=${3}
 
-readonly ITERATION=${4}
-readonly TEST_BUILD_NUMBER=${5}
+readonly TEST_BUILD_NUMBER=${4}
 
 readonly TOTAL_BUILD_NUMBER=29
 
@@ -16,7 +15,6 @@ mkdir ${OUTPUT_DIR}
 echo "NAMESPACE: ${NAMESPACE}"
 echo "JJB_POD: ${JJB_POD}"
 echo "JENKINS_URL: ${JENKINS_URL}"
-echo "ITERATION: ${ITERATION}"
 echo "TEST_BUILD_NUMBER: ${TEST_BUILD_NUMBER}"
 echo "OUTPUT_DIR: ${OUTPUT_DIR}"
 
@@ -78,7 +76,8 @@ function check_build() {
 }
 
 readonly TIMEOUT=1800
-for i_index in $(seq 1 ${ITERATION});
+i_index=1
+while true;
 do
   echo "${NAMESPACE} iteration: ${i_index}"
   ### delete jobs
@@ -100,4 +99,5 @@ do
   echo "${msg}"
   echo "${msg}" > ${OUTPUT_DIR}/jenkins_result_run_${NAMESPACE}_${i_index}_brief.txt
   echo "${MY_TIME}" >> ${OUTPUT_DIR}/jenkins_result_${NAMESPACE}_numbers.txt
+  i_index=`expr $i_index + 1`
 done

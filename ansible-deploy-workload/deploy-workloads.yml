@@ -26,7 +26,8 @@
       vars:
         jenkins_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
         jenkins_storage_class: "{{storage_class}}"
-        jenkins_pvc_size: "{{pvc_size | default('1Gi')}}"
+        jenkins_pvc_size: "{{pvc_size|default('1Gi')}}"
+        test_build_number: "{{build_numbers|default('29')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
 
