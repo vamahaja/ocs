@@ -9,6 +9,10 @@
         path: "{{workload_dir}}"
         state: directory
       tags: always
+    - name:
+      include_role:
+        name: pre-requisite
+      tags: always
   tasks:
     - name: Set variable for Jenkins workloads
       set_fact:

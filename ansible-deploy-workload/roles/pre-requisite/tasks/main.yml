@@ -1,0 +1,17 @@
+---
+# tasks file for pre-requisite
+
+- name: Check if JQ installed on oc-node
+  shell: |
+    jq --version
+  register: jq_version
+  ignore_errors: true
+  tags: jenkins
+
+- name: Download JQ from GitHub
+  get_url:
+    url: https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+    dest: /usr/bin/jq
+    mode: 0001
+  tags: jenkins
+  when: (jq_version.rc not in [0,1])
