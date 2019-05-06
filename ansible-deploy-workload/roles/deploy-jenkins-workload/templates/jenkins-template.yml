@@ -73,7 +73,7 @@ objects:
             value: ${JENKINS_SERVICE_NAME}
           - name: JNLP_SERVICE_NAME
             value: ${JNLP_SERVICE_NAME}
-          image: ' '
+          image: ${JENKINS_IMAGE}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 2
@@ -108,16 +108,6 @@ objects:
           persistentVolumeClaim:
             claimName: ${JENKINS_PVC_NAME}
     triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - jenkins
-        from:
-          kind: ImageStreamTag
-          name: ${JENKINS_IMAGE_STREAM_TAG}
-          namespace: ${NAMESPACE}
-        lastTriggeredImage: ""
-      type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
   kind: ServiceAccount
@@ -187,14 +177,10 @@ parameters:
   displayName: Memory Limit
   name: MEMORY_LIMIT
   value: 512Mi
-- description: The OpenShift Namespace where the Jenkins ImageStream resides.
-  displayName: Jenkins ImageStream Namespace
-  name: NAMESPACE
-  value: openshift
-- description: Name of the ImageStreamTag to be used for the Jenkins image.
-  displayName: Jenkins ImageStreamTag
-  name: JENKINS_IMAGE_STREAM_TAG
-  value: jenkins:2
+- description: Jenkins image url and tag
+  displayName: Jenkins image url and tag
+  name: JENKINS_IMAGE
+  value: registry.access.redhat.com/openshift3/jenkins-2-rhel7
 - description: PVC used to mount to the jenkins data directory
   displayName: PVC name
   name: JENKINS_PVC_NAME

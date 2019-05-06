@@ -99,7 +99,7 @@ objects:
               secretKeyRef:
                 key: database-name
                 name: ${DATABASE_SERVICE_NAME}
-          image: ' '
+          image: ${POSTGRESQL_IMAGE}
           imagePullPolicy: IfNotPresent
           livenessProbe:
             exec:
@@ -135,16 +135,6 @@ objects:
           persistentVolumeClaim:
             claimName: ${PGSQL_PVC_NAME}
     triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - postgresql
-        from:
-          kind: ImageStreamTag
-          name: postgresql:${POSTGRESQL_VERSION}
-          namespace: ${NAMESPACE}
-        lastTriggeredImage: ""
-      type: ImageChange
     - type: ConfigChange
   status: {}
 parameters:
@@ -153,10 +143,6 @@ parameters:
   name: MEMORY_LIMIT
   required: true
   value: 512Mi
-- description: The OpenShift Namespace where the ImageStream resides.
-  displayName: Namespace
-  name: NAMESPACE
-  value: openshift
 - description: The name of the OpenShift Service exposed for the database.
   displayName: Database Service Name
   name: DATABASE_SERVICE_NAME
@@ -181,9 +167,9 @@ parameters:
   value: sampledb
 - description: Version of PostgreSQL image to be used (9.4, 9.5, 9.6 or latest).
   displayName: Version of PostgreSQL Image
-  name: POSTGRESQL_VERSION
+  name: POSTGRESQL_IMAGE
+  value: registry.access.redhat.com/rhscl/postgresql-96-rhel7
   required: true
-  value: "9.6"
 - description: PVC used to mount to the pgsql data directory
   displayName: PVC name
   name: PGSQL_PVC_NAME
