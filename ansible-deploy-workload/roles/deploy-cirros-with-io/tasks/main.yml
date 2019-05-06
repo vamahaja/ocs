@@ -4,16 +4,10 @@
 - name: Set variables for cirros
   set_fact:
     remote_cirros_template_path: "{{cirros_workload_dir}}/cirros-template.yml"
-    cirros_namespace: "{{cirros_prefix}}-namespace"
+
     cirros_dc_name: "{{cirros_prefix}}"
     cirros_pvc_name: "{{cirros_prefix}}-pvc"
     random_data_size: "{{io_size}}"
-  tags: cirros
-
-- name: Create namespace for cirros pod
-  include: roles/oc-create-namespace/tasks/main.yml
-  vars:
-    namespace: "{{cirros_namespace}}"
   tags: cirros
 
 - name: Create PVC for cirros pod

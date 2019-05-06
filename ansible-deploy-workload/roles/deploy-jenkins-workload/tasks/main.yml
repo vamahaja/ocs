@@ -6,17 +6,11 @@
     remote_jenkins_template_path: "{{jenkins_workload_dir}}/jenkins-template.yml"
     remote_jjb_template_path: "{{jenkins_workload_dir}}/jjb-template.yml"
 
-    jenkins_namespace: "{{jenkins_prefix}}-namespace"
     jenkins_dc_name: "{{jenkins_prefix}}"
     jjb_dc_name: "{{jenkins_prefix}}-jjb"
     jjb_cm_name: "{{jenkins_prefix}}-cm"
     jenkins_pvc_name: "{{jenkins_prefix}}-pvc"
     jenkins_test_build_number: "{{test_build_number}}"
-  tags: jenkins
-
-- include: roles/oc-create-namespace/tasks/main.yml
-  vars:
-    namespace: "{{jenkins_namespace}}"
   tags: jenkins
 
 - name: Create PVC

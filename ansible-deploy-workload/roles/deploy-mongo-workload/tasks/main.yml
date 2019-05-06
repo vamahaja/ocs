@@ -6,15 +6,9 @@
     remote_mongo_template_path: "{{mongo_workload_dir}}/mongo-template.yml"
     remote_ycsb_template_path: "{{mongo_workload_dir}}/ycsb-template.yml"
 
-    mongo_namespace: "{{mongo_prefix}}-namespace"
     mongo_dc_name: "{{mongo_prefix}}"
     ycsb_dc_name: "{{mongo_prefix}}-ycsb"
     mongo_pvc_name: "{{mongo_prefix}}-pvc"
-  tags: mongo
-
-- include: roles/oc-create-namespace/tasks/main.yml
-  vars:
-    namespace: "{{mongo_namespace}}"
   tags: mongo
 
 - name: Create PVC for mongo pod

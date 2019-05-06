@@ -5,18 +5,12 @@
   set_fact:
     remote_amq_template_path: "{{amq_workload_dir}}/amq-template.yml"
 
-    amq_namespace: "{{amq_prefix}}-namespace"
     amq_dc_name: "{{amq_prefix}}"
     amq_pvc_name: "{{amq_prefix}}-pvc"
 
     message_count: "{{amq_message_count | default('1000')}}"
     message_size: "{{amq_message_size | default('1000')}}"
     iterations: "{{amq_iterations | default('10')}}"
-  tags: amq
-
-- include: roles/oc-create-namespace/tasks/main.yml
-  vars:
-    namespace: "{{amq_namespace}}"
   tags: amq
 
 - name: Create PVC

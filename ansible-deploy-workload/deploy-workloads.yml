@@ -17,6 +17,7 @@
     - name: Set variable for Jenkins workloads
       set_fact:
         pod_prefix: "{{prefix|default('autotest-jenkins')}}"
+        pod_namespace: "{{use_namespace|default('autotest-jenkins')}}"
         jenkins_workload_dir: "{{workload_dir}}/jenkins"
       tags: always
     - name: Create workload directory to copy config files
@@ -24,11 +25,18 @@
         path: "{{jenkins_workload_dir}}"
         state: directory
       tags: jenkins
+    - name: Create namespace for jenkins
+      include_role:
+        name: oc-create-namespace
+      vars:
+        namespace: "{{pod_namespace}}"
+      tags: jenkins
     - name: Deploy Jenkins workload
       include_role: 
         name: deploy-jenkins-workload
       vars:
         jenkins_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        jenkins_namespace: "{{pod_namespace}}"
         jenkins_storage_class: "{{storage_class}}"
         jenkins_pvc_size: "{{pvc_size|default('1Gi')}}"
         test_build_number: "{{build_numbers|default('29')}}"
@@ -38,6 +46,7 @@
     - name: Set variable for MongoDb workloads
       set_fact:
         pod_prefix: "{{prefix|default('autotest-mongo')}}"
+        pod_namespace: "{{use_namespace|default('autotest-mongo')}}"
         mongo_workload_dir: "{{workload_dir}}/mongo"
       tags: always
     - name: Create workload directory to copy config files
@@ -45,11 +54,18 @@
         path: "{{mongo_workload_dir}}"
         state: directory
       tags: mongo
+    - name: Create namespace for mongo
+      include_role:
+        name: oc-create-namespace
+      vars:
+        namespace: "{{pod_namespace}}"
+      tags: mongo
     - name: Deploy MongoDB workload
       include_role: 
         name: deploy-mongo-workload
       vars:
         mongo_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        mongo_namespace: "{{pod_namespace}}"
         mongo_storage_class: "{{storage_class}}"
         mongo_pvc_size: "{{pvc_size|default('3Gi')}}"
       with_sequence: start=1 end={{count|int}}
@@ -57,7 +73,8 @@
 
     - name: Set variable for PGSql workloads
       set_fact:
-        pod_prefix: "{{prefix | default('autotest-pgsql')}}"
+        pod_prefix: "{{prefix|default('autotest-pgsql')}}"
+        pod_namespace: "{{use_namespace|default('autotest-pgsql')}}"
         pgsql_workload_dir: "{{workload_dir}}/pgsql"
       tags: always
     - name: Create workload directory to copy config files
@@ -65,11 +82,18 @@
         path: "{{pgsql_workload_dir}}"
         state: directory
       tags: pgsql
+    - name: Create namespace for PGSql
+      include_role:
+        name: oc-create-namespace
+      vars:
+        namespace: "{{pod_namespace}}"
+      tags: pgsql
     - name: Deploy PGSql workload
       include_role: 
         name: deploy-pgsql-workload
       vars:
         pgsql_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        pgsql_namespace: "{{pod_namespace}}"
         pgsql_storage_class: "{{storage_class}}"
         pgsql_pvc_size: "{{pvc_size|default('3Gi')}}"
       with_sequence: start=1 end={{count|int}}
@@ -77,7 +101,8 @@
 
     - name: Set variable for AMQ workloads
       set_fact:
-        pod_prefix: "{{prefix | default('autotest-amq')}}"
+        pod_prefix: "{{prefix|default('autotest-amq')}}"
+        pod_namespace: "{{use_namespace|default('autotest-amq')}}"
         amq_workload_dir: "{{workload_dir}}/amq"
       tags: always
     - name: Create workload directory to copy config files
@@ -85,11 +110,18 @@
         path: "{{amq_workload_dir}}"
         state: directory
       tags: amq
+    - name: Create namespace for AMQ
+      include_role:
+        name: oc-create-namespace
+      vars:
+        namespace: "{{pod_namespace}}"
+      tags: amq
     - name: Deploy AMQ workload
       include_role:
         name: deploy-amq-workload
       vars:
         amq_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        amq_namespace: "{{pod_namespace}}"
         amq_storage_class: "{{storage_class}}"
         amq_pvc_size: "{{pvc_size|default('3Gi')}}"
       with_sequence: start=1 end={{count|int}}
@@ -98,6 +130,7 @@
     - name: set variables for cirros app pods
       set_fact:
         pod_prefix: "{{prefix|default('autotest-cirros')}}"
+        pod_namespace: "{{use_namespace|default('autotest-cirros')}}"
         cirros_workload_dir: "{{workload_dir}}/cirros"
       tags: always
     - name: create workload directory to copy config files
@@ -105,11 +138,18 @@
         path: "{{cirros_workload_dir}}"
         state: directory
       tags: cirros
+    - name: Create namespace for Cirros
+      include_role:
+        name: oc-create-namespace
+      vars:
+        namespace: "{{pod_namespace}}"
+      tags: cirros
     - name: deploy cirros app pod with io
       include_role:
         name: deploy-cirros-with-io
       vars:
         cirros_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        cirros_namespace: "{{pod_namespace}}"
         cirros_storage_class: "{{storage_class}}"
         cirros_pvc_size: "{{pvc_size|default('1Gi')}}"
         io_size: "{{cirros_io_size|default('1048576')}}"

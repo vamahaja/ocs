@@ -5,14 +5,8 @@
   set_fact:
     remote_pgsql_template_path: "{{pgsql_workload_dir}}/pgsql-template.yml"
 
-    pgsql_namespace: "{{pgsql_prefix}}-namespace"
     pgsql_dc_name: "{{pgsql_prefix}}"
     pgsql_pvc_name: "{{pgsql_prefix}}-pvc"
-  tags: pgsql
-
-- include: roles/oc-create-namespace/tasks/main.yml
-  vars:
-    namespace: "{{pgsql_namespace}}"
   tags: pgsql
 
 - name: Create PVC for pgsql pod

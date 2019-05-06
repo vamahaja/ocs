@@ -3,11 +3,21 @@
 
 - name: Create new namespace
   shell: |
+    oc get namespace {{namespace}}
+  register: get_namespace_output
+  tags: always
+  ignore_errors: true
+
+- name: Create new namespace
+  shell: |
     oc create namespace {{namespace}}
-  register: namespace_output
+  register: create_namespace_output
+  when: (get_namespace_output.rc not in [0,1])
+  tags: always
 
 - name: Change namespace if created
   shell: |
     oc project {{namespace}}
   register: project
-  when: namespace_output.stdout.find("created") != -1
+  when: (get_namespace_output.rc in [0,1]) or (create_namespace_output not in [0,1])
+  tags: always
