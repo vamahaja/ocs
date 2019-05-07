@@ -12,12 +12,12 @@
   shell: |
     oc create namespace {{namespace}}
   register: create_namespace_output
-  when: (get_namespace_output.rc not in [0,1])
+  when: (get_namespace_output.rc != 0)
   tags: always
 
 - name: Change namespace if created
   shell: |
     oc project {{namespace}}
   register: project
-  when: (get_namespace_output.rc in [0,1]) or (create_namespace_output not in [0,1])
+  when: (get_namespace_output.rc == 0) or (create_namespace_output != 0)
   tags: always
