@@ -57,8 +57,8 @@
 
 - name: Start executing load on pgsql
   shell: |
-    nohup sh ./start-pgsql-load.sh \
-      "{{pgsql_namespace}}" "{{pgsql_pod_name.stdout}}" >> start-pgsql-load.log 2>&1 &
+    nohup sh ./start-pgsql-load.sh {{pgsql_namespace}} {{pgsql_pod_name.stdout}} \
+      {{pgsql_scaling}} {{pgsql_clients}} {{pgsql_threads}} {{pgsql_transactions}} >/dev/null 2>&1 &
   args:
     chdir: "{{temp_workload_dir}}"
   async: 0

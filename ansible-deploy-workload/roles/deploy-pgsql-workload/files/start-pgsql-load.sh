@@ -1,16 +1,13 @@
 #!/bin/bash
 
 ### This script is used for run load on pgsql pod
-### eg. sh run-workload-pgsql.sh
-
 ### variables
 nameSpace=$1
 podName=$2
-scaling=800
-clients=10
-threads=2
-transactions=1000
-iterations=10
+scaling=$3
+clients=$4
+threads=$5
+transactions=$6
 
 outputFile=output-pgsql-$podName-scaling-$scaling-clients-$clients-threads-$threads-transactions-$transactions.$$
 
@@ -33,10 +30,13 @@ echo -e "\n****** Scaling up database $scaling times ******" >> $outputFile
 (time oc -n $nameSpace exec -i $podName -- bash -c "pgbench -i -s $scaling sampledb")  2>&1 |& tee -a $outputFile
 echo | tee -a $outputFile
 
-for i in $(seq 1 $iterations); do
+i_index=1
+while true;
+do
     ### run load
     echo -e "\n${G}Running transactions on database${N}"
-    echo "------ Running iteration $i ------" | tee -a $outputFile
+    echo "------ Running iteration $i_index ------" | tee -a $outputFile
     (time oc -n $nameSpace exec -i $podName -- bash -c "pgbench -c $clients -j $threads -t $transactions sampledb")  2>&1 |& tee -a $outputFile
     echo | tee -a $outputFile
+    i_index=`expr $i_index + 1`
 done

@@ -96,6 +96,10 @@
         pgsql_namespace: "{{pod_namespace}}"
         pgsql_storage_class: "{{storage_class}}"
         pgsql_pvc_size: "{{pvc_size|default('3Gi')}}"
+        pgsql_scaling: "{{pbench_scaling|default('800')}}"
+        pgsql_clients: "{{pbench_clients|default('10')}}"
+        pgsql_threads: "{{pbench_threads|default('2')}}"
+        pgsql_transactions: "{{pbench_transactions|default('1000')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
 
