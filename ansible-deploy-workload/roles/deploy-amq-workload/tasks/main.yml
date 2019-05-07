@@ -7,10 +7,6 @@
 
     amq_dc_name: "{{amq_prefix}}"
     amq_pvc_name: "{{amq_prefix}}-pvc"
-
-    message_count: "{{amq_message_count|default('1000')}}"
-    message_size: "{{amq_message_size|default('1000')}}"
-    iterations: "{{amq_iterations|default('10')}}"
   tags: amq
 
 - name: Create PVC

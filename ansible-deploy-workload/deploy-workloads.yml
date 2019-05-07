@@ -131,6 +131,9 @@
         amq_namespace: "{{pod_namespace}}"
         amq_storage_class: "{{storage_class}}"
         amq_pvc_size: "{{pvc_size|default('3Gi')}}"
+        message_count: "{{amq_message_count|default('1000')}}"
+        message_size: "{{amq_message_size|default('1000')}}"
+        iterations: "{{amq_iterations|default('10')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
 
