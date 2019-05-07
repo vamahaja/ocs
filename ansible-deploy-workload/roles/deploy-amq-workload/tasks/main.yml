@@ -8,9 +8,9 @@
     amq_dc_name: "{{amq_prefix}}"
     amq_pvc_name: "{{amq_prefix}}-pvc"
 
-    message_count: "{{amq_message_count | default('1000')}}"
-    message_size: "{{amq_message_size | default('1000')}}"
-    iterations: "{{amq_iterations | default('10')}}"
+    message_count: "{{amq_message_count|default('1000')}}"
+    message_size: "{{amq_message_size|default('1000')}}"
+    iterations: "{{amq_iterations|default('10')}}"
   tags: amq
 
 - name: Create PVC
@@ -61,10 +61,8 @@
   tags: amq
 - name: Start executing load on amq
   shell: |
-    nohup sh ./start-amq-load.sh \
-      "{{amq_namespace}}" "{{amq_pod_name.stdout}}" \
-      "{{message_count}}" "{{message_size}}" "{{iterations}}" \
-      >> start-amq-load.log 2>&1 &
+    nohup sh ./start-amq-load.sh "{{amq_namespace}}" "{{amq_pod_name.stdout}}" \
+        "{{message_count}}" "{{message_size}}" "{{iterations}}" >/dev/null 2>&1 &
   args:
     chdir: "{{temp_workload_dir}}"
   async: 0
