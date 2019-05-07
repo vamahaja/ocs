@@ -85,9 +85,8 @@
 
 - name: Start executing load on mongo
   shell: |
-    nohup sh ./start-mongo-load.sh \
-      "{{mongo_namespace}}" "{{mongo_pod_name.stdout}}" "{{ycsb_pod_name.stdout}}" "{{mongo_pod_addr.stdout}}" \
-      >> start-mongo-load.log 2>&1 &
+    nohup sh ./start-mongo-load.sh {{mongo_namespace}} {{mongo_pod_name.stdout}} {{ycsb_pod_name.stdout}} \
+        {{mongo_pod_addr.stdout}} {{mongo_threads}} {{mongo_records}} {{mongo_operations}} >/dev/null 2>&1 &
   args:
     chdir: "{{temp_workload_dir}}"
   async: 0

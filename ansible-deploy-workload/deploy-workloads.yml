@@ -68,6 +68,9 @@
         mongo_namespace: "{{pod_namespace}}"
         mongo_storage_class: "{{storage_class}}"
         mongo_pvc_size: "{{pvc_size|default('3Gi')}}"
+        mongo_threads: "{{ycsb_threads|default('10')}}"
+        mongo_records: "{{ycsb_records|default('1000')}}"
+        mongo_operations: "{{ycsb_operations|default('1000')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
 
