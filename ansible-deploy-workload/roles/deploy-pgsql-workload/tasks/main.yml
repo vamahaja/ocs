@@ -27,6 +27,7 @@
 - include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
   vars:
     namespace: "{{pgsql_namespace}}"
+    temp_dir : "{{pgsql_workload_dir}}"
     dc_name: "{{pgsql_dc_name}}"
     template_path: "{{remote_pgsql_template_path}}"
     parameters: >

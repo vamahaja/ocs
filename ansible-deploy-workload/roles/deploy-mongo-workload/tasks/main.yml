@@ -15,7 +15,7 @@
   include: roles/deploy-and-wait-for-pvc/tasks/main.yml
   vars:
     namespace: "{{mongo_namespace}}"
-    temp_dir : "{{mongo_workload_dir}}"
+    temp_dir: "{{mongo_workload_dir}}"
     pvc_name: "{{mongo_pvc_name}}"
     volume_capacity: "{{mongo_pvc_size}}"
     storage_class_name: "{{mongo_storage_class}}"
@@ -29,6 +29,7 @@
 - include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
   vars:
     namespace: "{{mongo_namespace}}"
+    temp_dir: "{{mongo_workload_dir}}"
     dc_name: "{{mongo_dc_name}}"
     template_path: "{{remote_mongo_template_path}}"
     parameters: >
@@ -56,6 +57,7 @@
 - include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
   vars:
     namespace: "{{mongo_namespace}}"
+    temp_dir: "{{mongo_workload_dir}}"
     dc_name: "{{ycsb_dc_name}}"
     template_path: "{{remote_ycsb_template_path}}"
     parameters: >

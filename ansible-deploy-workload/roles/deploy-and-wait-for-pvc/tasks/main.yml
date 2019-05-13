@@ -3,7 +3,7 @@
 
 - name: Remote template's path
   set_fact:
-    remote_pvc_template_path: "{{workload_dir}}/pvc-template.yml"
+    remote_pvc_template_path: "{{temp_dir}}/pvc-template.yml"
     pvc_namespace: "{{namespace}}"
 
 - name: Copy PVC template file to oc-master node
@@ -13,6 +13,7 @@
 - include: ../../oc-process/tasks/main.yml
   vars:
     template_path: "{{remote_pvc_template_path}}"
+    temp_template_dir: "{{temp_dir}}"
     parameters: >
       JENKINS_PVC_NAME={{pvc_name}}
       VOLUME_CAPACITY={{volume_capacity}}

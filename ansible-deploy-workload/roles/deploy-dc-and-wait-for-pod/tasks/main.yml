@@ -6,10 +6,11 @@
     dc_template_path: "{{template_path}}"
     dc_parameters: "{{parameters}}"
     dc_namespace: "{{namespace}}" 
+    dc_temp_dir: "{{temp_dir}}"
 - include: ../../oc-process/tasks/main.yml
   vars:
-    namespace: "{{dc_namespace}}"
     template_path: "{{dc_template_path}}"
+    temp_template_dir: "{{dc_temp_dir}}"
     parameters: "{{dc_parameters}}"
 - name: Wait for DC deploy pod to start
   pause:
