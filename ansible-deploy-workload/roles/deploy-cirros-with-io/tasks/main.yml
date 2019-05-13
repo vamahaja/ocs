@@ -34,7 +34,7 @@
     dc_name: "{{cirros_dc_name}}"
     template_path: "{{remote_cirros_template_path}}"
     parameters: >
-      DC_NAME="{{cirros_dc_name}}"
-      CLAIM_NAME="{{cirros_pvc_name}}"
-      IO_SIZE="{{random_data_size}}"
+      DC_NAME={{cirros_dc_name}}
+      CLAIM_NAME={{cirros_pvc_name}}
+      IO_SIZE={{random_data_size}}
   tags: cirros

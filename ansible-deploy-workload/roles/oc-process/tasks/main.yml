@@ -7,7 +7,7 @@
 
 - name: Create oc resource template on oc-master node
   shell: |
-    oc process -f {{template_path}} {{parameters}}
+    oc process -o yaml -f {{template_path}} {{parameters}}
   register: oc_process_output
 - name: Create oc resource file on oc-master node
   copy:
