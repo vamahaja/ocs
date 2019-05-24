@@ -1,0 +1,48 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: This pod will run IO on underlined PVC.
+  name: fio
+objects:
+- kind: 'DeploymentConfig'
+  apiVersion: 'v1'
+  metadata:
+    name: ${DC_NAME}
+  spec:
+    template:
+      metadata:
+        labels:
+          name: ${DC_NAME}
+      spec:
+        restartPolicy: 'Always'
+        volumes:
+        - name: 'fio-vol'
+          persistentVolumeClaim:
+            claimName: ${PVC_NAME}
+        containers:
+        - name: 'fio'
+          image: 'vamahaja/fio-workload'
+          imagePullPolicy: 'IfNotPresent'
+          command: ["/bin/ash", "-ec", "while :; do echo '.'; sleep 5 ; done"]
+          volumeMounts:
+          - mountPath: ${MOUNT_PATH}
+            name: 'fio-vol'
+    replicas: 1
+    triggers:
+      - type: 'ConfigChange'
+    paused: false
+    revisionHistoryLimit: 2
+parameters:
+- description: Name of the deplyement Config
+  displayName: DC Name
+  name: DC_NAME
+  required: true
+- description: Name of the PVC
+  displayName: PVC Name
+  name: PVC_NAME
+  required: true
+- description: Path to be mounted to pvc
+  displayName: PVC mount path
+  name: MOUNT_PATH
+  default: /var/lib/fio

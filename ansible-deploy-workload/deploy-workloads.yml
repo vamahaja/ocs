@@ -165,3 +165,36 @@
         io_size: "{{cirros_io_size|default('1048576')}}"
       with_sequence: start=1 end={{count|int}}
       tags: always
+
+    - name: Set variables for fio app pods
+      set_fact:
+        pod_prefix: "{{prefix|default('autotest-fio')}}"
+        pod_namespace: "{{use_namespace|default('autotest-fio')}}"
+        fio_workload_dir: "{{workload_dir}}/fio"
+      tags: always
+    - name: Create workload directory to copy config files
+      file:
+        path: "{{fio_workload_dir}}"
+        state: directory
+      tags: fio
+    - name: Create namespace for fio
+      include_role:
+        name: oc-create-namespace
+      vars:
+        namespace: "{{pod_namespace}}"
+      tags: fio
+    - name: Deploy fio app pod with io
+      include_role:
+        name: deploy-fio-workload
+      vars:
+        fio_prefix: "{{pod_prefix}}-{{(999999|random|to_uuid)[:6]}}"
+        fio_namespace: "{{pod_namespace}}"
+        fio_storage_class: "{{storage_class}}"
+        fio_pvc_size: "{{pvc_size|default('1Gi')}}"
+        fio_mount_path: "{{mount_path|default('/var/lib/fio')}}"
+        fio_file_size: "{{file_size|default('512M')}}"
+        fio_run_time: "{{run_time|default('120s')}}"
+        fio_io_engine: "{{io_engine|default('libaio')}}"
+        fio_direct: "{{direct|default('1')}}"
+      with_sequence: start=1 end={{count|int}}
+      tags: always

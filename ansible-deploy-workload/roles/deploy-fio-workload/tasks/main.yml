@@ -1,0 +1,72 @@
+---
+# tasks file for deploy-fio-workload
+
+- name: Set variables for fio
+  set_fact:
+    remote_fio_template_path: "{{fio_workload_dir}}/fio-template.yml"
+
+    fio_dc_name: "{{fio_prefix}}"
+    fio_pvc_name: "{{fio_prefix}}-pvc"
+    fio_file_name: "{{fio_mount_path}}/testfile"
+  tags: fio
+
+- name: Create PVC for fio pod
+  include: roles/deploy-and-wait-for-pvc/tasks/main.yml
+  vars:
+    namespace: "{{fio_namespace}}"
+    temp_dir: "{{fio_workload_dir}}"
+    pvc_name: "{{fio_pvc_name}}"
+    volume_capacity: "{{fio_pvc_size}}"
+    storage_class_name: "{{fio_storage_class}}"
+  tags: fio
+
+- name: Copy fio template file to oc-master node
+  copy:
+    src: roles/deploy-fio-workload/templates/fio-template.yml
+    dest: "{{remote_fio_template_path}}"
+  tags: fio
+
+- name: deploy fio app pod and wait for it to come up
+  include: roles/deploy-dc-and-wait-for-pod/tasks/main.yml
+  vars:
+    namespace: "{{fio_namespace}}"
+    temp_dir: "{{fio_workload_dir}}"
+    dc_name: "{{fio_dc_name}}"
+    template_path: "{{remote_fio_template_path}}"
+    parameters: >
+      DC_NAME={{fio_dc_name}}
+      PVC_NAME={{fio_pvc_name}}
+      MOUNT_PATH={{fio_mount_path}}
+  tags: fio
+
+- name: Get pod name from deployment config
+  shell: |
+    oc get pods -n {{fio_namespace}} --no-headers \
+      -o=custom-columns=:.metadata.name --selector deploymentconfig={{fio_dc_name}}
+  register: fio_pod_name
+  tags: fio
+
+- name: Set workload temporary directory
+  set_fact:
+    temp_workload_dir: "{{fio_workload_dir}}/{{fio_pod_name.stdout}}"
+  tags: fio
+- name: Create temporary directory to copy script files
+  file:
+    path: "{{temp_workload_dir}}"
+    state: directory
+  tags: fio
+- name: Copy config files on oc-master node
+  copy:
+    src: roles/deploy-fio-workload/files/start-fio-load.sh
+    dest: "{{temp_workload_dir}}"
+  tags: fio
+
+- name: Start executing load on fio
+  shell: |
+    nohup sh ./start-fio-load.sh {{fio_namespace}} {{fio_pod_name.stdout}} \
+      {{fio_file_size}} {{fio_run_time}} {{fio_io_engine}} {{fio_direct}} {{fio_file_name}} >/dev/null 2>&1 &
+  args:
+    chdir: "{{temp_workload_dir}}"
+  async: 0
+  poll: 0
+  tags: fio
